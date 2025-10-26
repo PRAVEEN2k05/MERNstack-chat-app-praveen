@@ -37,31 +37,124 @@ io.on("connection", (socket) => {
 export { io, app, server };
 */
 
-/*import { Server } from "socket.io";
+// backend/src/lib/socket.js
+
+
+
+
+/*
+
+WANTED VERSION
+
+import { Server } from "socket.io";
 import http from "http";
 import express from "express";
 
 const app = express();
 const server = http.createServer(app);
 
+// Store online users with their socket IDs
+const userSocketMap = {}; // { userId: socketId }
+
 const io = new Server(server, {
   cors: {
-    origin: ["http://localhost:5173"],
+    origin: ["http://localhost:5173", "https://your-frontend-domain.onrender.com"],
+    methods: ["GET", "POST"],
   },
 });
 
 io.on("connection", (socket) => {
-  console.log("A user connected", socket.id);
+  console.log("🟢 User connected:", socket.id);
+
+  // Extract userId from query params (sent from frontend)
+  const userId = socket.handshake.query.userId;
+  if (userId) {
+    userSocketMap[userId] = socket.id;
+  }
+
+  // Notify all clients about online users
+  io.emit("getOnlineUsers", Object.keys(userSocketMap));
 
   socket.on("disconnect", () => {
-    console.log("A user disconnected", socket.id);
+    console.log("🔴 User disconnected:", socket.id);
+    // Remove from map
+    for (const [uid, sid] of Object.entries(userSocketMap)) {
+      if (sid === socket.id) {
+        delete userSocketMap[uid];
+        break;
+      }
+    }
+    io.emit("getOnlineUsers", Object.keys(userSocketMap));
   });
 });
 
-export { io, app, server };
+
+export const getReceiverSocketId = (receiverId) => {
+  return userSocketMap[receiverId];
+};
+
+export { io, server, app };
+
+
+
+
 */
 
+
+
+//deployment version
 import { Server } from "socket.io";
+import http from "http";
+import express from "express";
+
+const app = express();
+const server = http.createServer(app);
+
+const userSocketMap = {}; // { userId: socketId }
+
+const io = new Server(server, {
+  cors: {
+    origin: ["http://localhost:5173", "https://your-frontend-domain.onrender.com"],
+    methods: ["GET", "POST"],
+  },
+});
+
+io.on("connection", (socket) => {
+  console.log("🟢 User connected:", socket.id);
+
+  // For Socket.IO v4+, use handshake.auth
+  const userId = socket.handshake.query.userId || socket.handshake.auth?.userId;
+
+  if (userId) {
+    userSocketMap[userId] = socket.id;
+  }
+
+  io.emit("getOnlineUsers", Object.keys(userSocketMap));
+
+  socket.on("disconnect", () => {
+    console.log("🔴 User disconnected:", socket.id);
+    for (const [uid, sid] of Object.entries(userSocketMap)) {
+      if (sid === socket.id) {
+        delete userSocketMap[uid];
+        break;
+      }
+    }
+    io.emit("getOnlineUsers", Object.keys(userSocketMap));
+  });
+});
+
+export const getReceiverSocketId = (receiverId) => userSocketMap[receiverId];
+
+export { io, server, app };
+
+
+
+
+
+
+
+
+/*import { Server } from "socket.io";
 import http from "http";
 import express from "express";
 
@@ -89,6 +182,6 @@ io.on("connection", (socket) => {
 
 export { io, app, server };
 
-
+*/
 
 
