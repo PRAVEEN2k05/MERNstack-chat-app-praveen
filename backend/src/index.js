@@ -112,24 +112,28 @@ import dotenv from "dotenv";
 import cookieParser from "cookie-parser";
 import cors from "cors";
 import path from "path";
+import { fileURLToPath } from "url";
 
 // Import your routes
 import authRoutes from "./routes/auth.route.js";
 import messageRoutes from "./routes/message.route.js";
 
-dotenv.config();
-const app = express();
-const __dirname = path.resolve();
+// Setup __dirname for ES modules
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
-// Middlewares
+dotenv.config();
+
+const app = express();
+const PORT = process.env.PORT || 5000;
+
+// Middleware
 app.use(express.json());
 app.use(cookieParser());
-app.use(
-  cors({
-    origin: process.env.CLIENT_URL || "http://localhost:5173",
-    credentials: true,
-  })
-);
+app.use(cors({
+  origin: "http://localhost:5173", // change in production if needed
+  credentials: true,
+}));
 
 // API routes
 app.use("/api/auth", authRoutes);
@@ -139,18 +143,18 @@ app.use("/api/messages", messageRoutes);
 if (process.env.NODE_ENV === "production") {
   const frontendDistPath = path.join(__dirname, "../frontend/dist");
 
+  // Serve static files
   app.use(express.static(frontendDistPath));
 
-  // SPA fallback route (Express 5 compatible)
-  app.get("*", (req, res) => {
+  // SPA fallback for React routing (Express 5 compatible)
+  app.get("/:any(.*)", (req, res) => {
     res.sendFile(path.join(frontendDistPath, "index.html"));
   });
 }
 
 // Start server
-const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
-  console.log(`Server running in ${process.env.NODE_ENV} mode on port ${PORT}`);
+  console.log(`Server running on port ${PORT}`);
 });
 
 
