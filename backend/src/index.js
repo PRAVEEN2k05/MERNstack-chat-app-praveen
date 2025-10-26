@@ -119,39 +119,39 @@ import messageRoutes from "./routes/message.route.js";
 import { app, server } from "./lib/socket.js";
 
 dotenv.config();
-
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT;
 const __dirname = path.resolve();
 
-// Middleware
+// Middlewares
 app.use(express.json());
 app.use(cookieParser());
 app.use(
   cors({
-    origin: ["http://localhost:5173", "https://your-frontend-domain.onrender.com"],
+    origin: "http://localhost:5173", // add your frontend URL
     credentials: true,
   })
 );
 
-// Routes
+// API Routes
 app.use("/api/auth", authRoutes);
 app.use("/api/messages", messageRoutes);
 
-// Production: Serve React frontend
+// Production build setup
 if (process.env.NODE_ENV === "production") {
   app.use(express.static(path.join(__dirname, "../frontend/dist")));
 
-  // Wildcard route for React SPA
-  app.get("*", (req, res) => {
+  // Correct SPA wildcard route for Express 5
+  app.get("/*", (req, res) => {
     res.sendFile(path.join(__dirname, "../frontend/dist/index.html"));
   });
 }
 
 // Start server
 server.listen(PORT, () => {
-  console.log(`Server is running on PORT: ${PORT}`);
+  console.log("Server is running on PORT: " + PORT);
   connectDB();
 });
+
 
 
 
